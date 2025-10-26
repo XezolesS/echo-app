@@ -2,4 +2,14 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="primary_1">#FFFFFFFF</color>
+    <color name="primary_2">#FFB3B3B3</color>
+    <color name="primary_3">#FF666666</color>
+    <color name="primary_4">#FF262626</color>
+    <color name="primary_5">#FF000000</color>
+
+    <color name="accent_negative">#FFB62427</color>
+    <color name="accent_positive">#FF248BB6</color>
+    <color name="accent_processing">#FFB69424</color>
 </resources>
