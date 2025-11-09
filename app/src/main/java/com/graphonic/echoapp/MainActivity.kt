@@ -35,6 +35,10 @@ class MainActivity : AppCompatActivity() {
         requestPermission()
         setRecordingPath(this)
         registerButtonEvents()
+
+        // TEST
+        val pymodule = EchoSpeechModuleWrapper(this)
+        pymodule.HelloPython()
     }
 
     private fun checkAudioPermission(): Boolean {
