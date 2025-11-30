@@ -69,6 +69,10 @@ fun EchoScreen(
 
             Spacer(Modifier.height(18.dp))
 
+
+
+
+            //발화 속도 그래프 버전
             SectionTitle("발화 속도 분석")
             ChartCard(
                 values = paceValues,
@@ -80,13 +84,129 @@ fun EchoScreen(
             //
             Caption(paceCaption)
 
-            speechResult?.let {
-                Spacer(Modifier.height(24.dp))
-                SpeechSpeedCard(result = it)
+//            SectionTitle("발화 속도 분석")
+//            speechResult?.let { sr ->
+//                PaceTimelineCard(
+//                    result = sr,
+//                    metaRightBottom = paceMetaRightBottom
+//                )
+//            }
+//
+//            Caption(paceCaption)
+
+
+
+
+
+
+            //결과 창
+//            speechResult?.let {
+//                Spacer(Modifier.height(24.dp))
+//                SpeechSpeedCard(result = it)
+//            }
+        }
+    }
+}
+
+
+private fun formatSeconds(sec: Double): String {
+    val total = sec.toInt()
+    val m = total / 60
+    val s = total % 60
+    return "%02d:%02d".format(m, s)
+}
+
+@Composable
+private fun PaceTimelineCard(
+    result: SpeechSpeedResult,
+    metaRightBottom: String? = null,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .clip(MaterialTheme.shapes.medium)
+        .background(Color.White)
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        // 윗부분: 회색 타임라인 + 글자 + 00:00 ~ 마지막 시간
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(MaterialTheme.shapes.small)
+                .background(Color(0xFFE0E0E0))
+        ) {
+            val chars = result.transcript.replace(" ", "").map { it.toString() }
+            val displayChars = if (chars.size > 12) chars.take(12) else chars
+
+            // 가운데 글자들 (안-녕-하-세-요 ... 느낌)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                displayChars.forEach { ch ->
+                    Text(ch, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            // 아래 00:00 ~ 00:07 이런 시간
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "00:00",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF9E9E9E)
+                )
+                Text(
+                    formatSeconds(result.totalSpeechTimeSeconds),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF9E9E9E)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // 아래쪽: 왼쪽에 "빠름 느림", 오른쪽에 평균 속도 텍스트
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Row {
+                Text(
+                    "빠름",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFD16B6B)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "느림",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF1976D2)
+                )
+            }
+            metaRightBottom?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF9E9E9E),
+                    textAlign = TextAlign.End
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun SpeechSpeedCard(result: SpeechSpeedResult) {

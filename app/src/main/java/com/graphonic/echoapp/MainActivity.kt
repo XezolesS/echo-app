@@ -66,7 +66,8 @@ class MainActivity : ComponentActivity() {
                 ampMetaRightBottom = ampMeta,
                 paceValues = pace,
                 paceCaption = paceCaption,
-                paceMetaRightBottom = paceMeta
+                paceMetaRightBottom = paceMeta,
+                speechResult = speechResult
             )
         }
     }
@@ -115,11 +116,20 @@ private fun buildPaceCaption(result: SpeechSpeedResult): String {
     return "전반적으로 $desc 과하게 빠르거나 느린 부분이 보입니다."
 }
 
+//평균 속도 (그래프 버전)
+//private fun buildPaceMeta(result: SpeechSpeedResult): String {
+//    val cpsText = "%.2f".format(result.cps)
+//    return "평균 발화 속도: ${cpsText}자/초"
+//}
+
 //평균 속도
 private fun buildPaceMeta(result: SpeechSpeedResult): String {
     val cpsText = "%.2f".format(result.cps)
-    return "평균 발화 속도: ${cpsText}자/초"
+    val recommended = 2.5
+    val recText = "%.1f".format(recommended)
+    return "평균 발화 속도: ${cpsText}음절/초\n권장 평균 발화 속도: ${recText}음절/초"
 }
+
 
 //Amp
 private data class AmpStats(
