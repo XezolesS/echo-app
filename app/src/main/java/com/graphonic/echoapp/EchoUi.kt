@@ -32,7 +32,8 @@ fun EchoScreen(
     ampMetaRightBottom: String? = null,
     paceValues: List<Float>,
     paceCaption: String,
-    paceMetaRightBottom: String? = null
+    paceMetaRightBottom: String? = null,
+    speechResult: SpeechSpeedResult? = null
 ) {
     Surface(color = Color(0xFFF6F6F6)) {
         Column(
@@ -75,10 +76,55 @@ fun EchoScreen(
                 guideLabelsRight = listOf("느림", "보통", "빠름"),
                 metaRightBottom = paceMetaRightBottom
             )
+
+            //
             Caption(paceCaption)
+
+            speechResult?.let {
+                Spacer(Modifier.height(24.dp))
+                SpeechSpeedCard(result = it)
+            }
         }
     }
 }
+
+@Composable
+fun SpeechSpeedCard(result: SpeechSpeedResult) {
+    androidx.compose.material3.Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "파일: ${result.fileName}")
+            Spacer(Modifier.height(8.dp))
+
+            Text(text = "발화 속도 (WPM): ${"%.2f".format(result.wpm)}")
+            Text(text = "초당 글자 수 (CPS): ${"%.2f".format(result.cps)}")
+            Text(text = "속도 평가: ${speedLabel(result.wpm)}")
+
+            Text(text = "총 발화 시간: ${result.totalSpeechTimeSeconds}초")
+            Text(text = "단어 수: ${result.totalWords}")
+            Text(text = "공백 제외 글자 수: ${result.totalCharactersNoSpace}")
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(text = "내용")
+            Text(
+                text = result.transcript,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+fun speedLabel(wpm: Double): String =
+    when {
+        wpm < 80 -> "느린 속도"
+        wpm < 150 -> "보통 속도"
+        else -> "빠른 속도"
+    }
+
 
 @Composable private fun SectionTitle(t: String) =
     Text(t, style = MaterialTheme.typography.labelLarge,
@@ -155,9 +201,23 @@ private fun ChartCard(
     val rnd = Random(7)
     val a = List(180) { (0.35f + rnd.nextFloat() * 0.4f).coerceIn(0f, 1f) }
     val p = List(180) { (0.25f + rnd.nextFloat() * 0.5f).coerceIn(0f, 1f) }
+
+    val previewResult = SpeechSpeedResult(
+        status = "success",
+        fileName = "preview.wav",
+        wpm = 120.0,
+        cps = 3.0,
+        totalSpeechTimeSeconds = 7.0,
+        totalWords = 30,
+        totalCharactersNoSpace = 50,
+        analysisTimeSeconds = 0.43,
+        transcript = "안녕 하세요 반갑습니다 (프리뷰 예시)"
+    )
+
     EchoScreen(
         isRecording = false, onToggleMic = {}, onRefresh = {},
         ampValues = a, ampCaption = "전반적 볼륨은 보통입니다.", ampMetaRightBottom = "최대 79% · 평균 52%",
-        paceValues = p, paceCaption = "약간 느린 발화입니다.", paceMetaRightBottom = "지수 2.8/초"
+        paceValues = p, paceCaption = "약간 느린 발화입니다.", paceMetaRightBottom = "지수 2.8/초",
+        speechResult = previewResult
     )
 }
