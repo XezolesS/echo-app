@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.transition.Visibility
 import com.graphonic.echoapp.response.AnalysisResponse
 import com.graphonic.echoapp.response.ArticulationResponse
 import com.graphonic.echoapp.response.ErrorResponse
@@ -19,6 +20,7 @@ import com.graphonic.echoapp.response.IntensityResponse
 import com.graphonic.echoapp.response.IntonationResponse
 import com.graphonic.echoapp.response.SpeechRateResponse
 import com.graphonic.echoapp.ui.IntensityFragment
+import com.graphonic.echoapp.ui.SpeechRateFragment
 import kotlinx.coroutines.launch
 import java.io.File
 import java.net.UnknownServiceException
@@ -35,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var audioRecorder: AudioRecorder
 
     private lateinit var intensityFragment: IntensityFragment
+    private lateinit var speechRateFragment: SpeechRateFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,10 +69,20 @@ class MainActivity : AppCompatActivity() {
     private fun setupFragments() {
         // Find existing fragment or create a new one
         intensityFragment =
-            supportFragmentManager.findFragmentById(R.id.intensity_fragment) as? IntensityFragment
+            supportFragmentManager.findFragmentById(R.id.intensity_fragment_container) as? IntensityFragment
                 ?: IntensityFragment().also {
                     supportFragmentManager.beginTransaction()
-                        .replace(R.id.intensity_fragment, it)
+                        .replace(R.id.intensity_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        speechRateFragment =
+            supportFragmentManager.findFragmentById(R.id.speech_rate_fragment_container) as? SpeechRateFragment
+                ?: SpeechRateFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.speech_rate_fragment_container, it)
+                        .hide(it)
                         .commit()
                 }
     }
@@ -129,6 +142,9 @@ class MainActivity : AppCompatActivity() {
         audioRecorder.stop()
         setRecordButtonTint(stopColor)
 
+        Toast.makeText(applicationContext, "Analyzing...", Toast.LENGTH_SHORT).show()
+        recordButton.isEnabled = false
+
         lifecycleScope.launch {
             try {
                 // Process speech
@@ -148,14 +164,28 @@ class MainActivity : AppCompatActivity() {
                 // Visualize
                 when (response.intensity) {
                     is IntensityResponse -> {
-                        intensityFragment.updateData(response.intensity)
+                        intensityFragment.view?.post {
+                            intensityFragment.updateData(response.intensity)
+                            showFragment(intensityFragment)
+                        }
                     }
 
-                    is ErrorResponse -> {
+                    else -> {
+                        hideFragment(intensityFragment)
+                    }
+                }
 
+                when (response.speechRate) {
+                    is SpeechRateResponse -> {
+                        speechRateFragment.view?.post {
+                            speechRateFragment.updateData(response.speechRate)
+                            showFragment(speechRateFragment)
+                        }
                     }
 
-                    else -> {}
+                    else -> {
+                        hideFragment(speechRateFragment)
+                    }
                 }
 
             } catch (e: UnknownServiceException) {
@@ -172,8 +202,18 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.e("EchoSpeech", "Error: ${e.message}")
+            } finally {
+                recordButton.isEnabled = true
             }
         }
+    }
+
+    private fun showFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction().show(fragment).commit()
+    }
+
+    private fun hideFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction().hide(fragment).commit()
     }
 
 }

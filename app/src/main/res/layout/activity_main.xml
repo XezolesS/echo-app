@@ -64,8 +64,12 @@
             android:orientation="vertical">
 
             <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/intensity_fragment"
-                android:name="com.graphonic.echoapp.ui.IntensityFragment"
+                android:id="@+id/intensity_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/speech_rate_fragment_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </LinearLayout>
