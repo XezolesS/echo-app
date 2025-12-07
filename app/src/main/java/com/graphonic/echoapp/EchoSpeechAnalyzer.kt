@@ -1,7 +1,10 @@
 package com.graphonic.echoapp
 
-import com.google.gson.Gson
-import com.google.gson.JsonObject
+import android.util.Log
+import com.google.gson.GsonBuilder
+import com.graphonic.echoapp.response.AnalysisResponse
+import com.graphonic.echoapp.response.AnalysisResult
+import com.graphonic.echoapp.response.AnalysisResultDeserializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -21,7 +24,9 @@ object EchoSpeechAnalyzer {
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
-    private val gson = Gson()
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(AnalysisResult::class.java, AnalysisResultDeserializer())
+        .create()
 
     /**
      * Upload an audio file and request analyses.
@@ -48,7 +53,7 @@ object EchoSpeechAnalyzer {
         articulation: Boolean = false,
         refText: String? = null,
         maxWorkers: Int = 4
-    ): JsonObject = withContext(Dispatchers.IO) {
+    ): AnalysisResponse = withContext(Dispatchers.IO) {
         val bodyBuilder = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("file", audioFile.name, audioFile.asRequestBody(AUDIO_WAV))
@@ -72,7 +77,10 @@ object EchoSpeechAnalyzer {
                 // include server message if present
                 throw Exception("Server error: ${resp.code}. Body: $bodyString")
             }
-            return@withContext gson.fromJson(bodyString, JsonObject::class.java)
+
+            Log.d("EchoSpeech", "Response body: $bodyString")
+
+            return@withContext gson.fromJson(bodyString, AnalysisResponse::class.java)
         }
     }
 
