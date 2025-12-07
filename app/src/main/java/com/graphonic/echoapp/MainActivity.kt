@@ -20,6 +20,7 @@ import com.graphonic.echoapp.response.IntensityResponse
 import com.graphonic.echoapp.response.IntonationResponse
 import com.graphonic.echoapp.response.SpeechRateResponse
 import com.graphonic.echoapp.ui.IntensityFragment
+import com.graphonic.echoapp.ui.IntonationFragment
 import com.graphonic.echoapp.ui.SpeechRateFragment
 import kotlinx.coroutines.launch
 import java.io.File
@@ -38,6 +39,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var intensityFragment: IntensityFragment
     private lateinit var speechRateFragment: SpeechRateFragment
+    private lateinit var intonationFragment: IntonationFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +84,15 @@ class MainActivity : AppCompatActivity() {
                 ?: SpeechRateFragment().also {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.speech_rate_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        intonationFragment =
+            supportFragmentManager.findFragmentById(R.id.intonation_fragment_container) as? IntonationFragment
+                ?: IntonationFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.intonation_fragment_container, it)
                         .hide(it)
                         .commit()
                 }
@@ -162,12 +173,15 @@ class MainActivity : AppCompatActivity() {
                 Log.d("EchoSpeech", "Server Result: ${response}")
 
                 // Visualize
+                // Intensity
                 when (response.intensity) {
                     is IntensityResponse -> {
                         intensityFragment.view?.post {
                             intensityFragment.updateData(response.intensity)
                             showFragment(intensityFragment)
                         }
+
+                        Log.d("EchoSpeech", "Visualise intensity: ${response.intensity}")
                     }
 
                     else -> {
@@ -175,16 +189,35 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                // Speech-rate
                 when (response.speechRate) {
                     is SpeechRateResponse -> {
                         speechRateFragment.view?.post {
                             speechRateFragment.updateData(response.speechRate)
                             showFragment(speechRateFragment)
                         }
+
+                        Log.d("EchoSpeech", "Visualise speech rate: ${response.speechRate}")
                     }
 
                     else -> {
                         hideFragment(speechRateFragment)
+                    }
+                }
+
+                // Intonation
+                when (response.intonation) {
+                    is IntonationResponse -> {
+                        intonationFragment.view?.post {
+                            intonationFragment.updateData(response.intonation)
+                            showFragment(intonationFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise intonation: ${response.intonation}")
+                    }
+
+                    else -> {
+                        hideFragment(intonationFragment)
                     }
                 }
 
