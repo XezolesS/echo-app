@@ -1,3 +1,0 @@
-[submodule "app/src/main/python/echo_speech_module"]
-	path = app/src/main/python/echo_speech_module
-	url = https://github.com/XezolesS/echo-speech-module
