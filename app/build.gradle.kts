@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.chaquo.python")
 }
 
 android {
@@ -39,27 +38,6 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-
-    flavorDimensions += "pyVersion"
-    productFlavors {
-        create("py310") { dimension = "pyVersion" }
-        create("py311") { dimension = "pyVersion" }
-    }
-}
-
-chaquopy {
-    defaultConfig {
-        pip {
-            // requirements
-            // install("-r", "requirements.txt")
-        }
-
-        version = "3.11"
-    }
-
-    productFlavors {
-        getByName("py311") { version = "3.11" }
-    }
 }
 
 dependencies {
@@ -72,4 +50,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
 }

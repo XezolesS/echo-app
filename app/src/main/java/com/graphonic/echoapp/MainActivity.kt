@@ -1,26 +1,30 @@
 package com.graphonic.echoapp
 
-import android.content.Context
 import android.content.pm.PackageManager
-import android.media.MediaRecorder
-import android.os.Build
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import android.widget.ImageButton
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import java.io.IOException
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.net.UnknownServiceException
 
 class MainActivity : AppCompatActivity() {
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
-    private var mediaRecorder: MediaRecorder? = null
-    private var audioFilePath: String = ""
-    private var isRecording: Boolean = false
+    private lateinit var recordColor: ColorStateList
+    private lateinit var stopColor: ColorStateList
+
+    private lateinit var recordButton: ImageButton;
+
+    private lateinit var audioRecorder: AudioRecorder
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,9 +36,26 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        // Get Color
+        recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)
+        stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)
+
+        // Get button
+        recordButton = findViewById<ImageButton>(R.id.record_button)
+
+        // Initialize the new AudioRecorder class
+        audioRecorder = AudioRecorder(this)
+
         requestPermission()
-        setRecordingPath(this)
         registerButtonEvents()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Ensure recording is stopped if the activity is destroyed
+        if (audioRecorder.isRecording) {
+            audioRecorder.stop()
+        }
     }
 
     private fun checkAudioPermission(): Boolean {
@@ -46,72 +67,75 @@ class MainActivity : AppCompatActivity() {
         if (checkAudioPermission()) {
             return
         }
-
         requestPermissions(
             arrayOf(android.Manifest.permission.RECORD_AUDIO),
-            REQUEST_RECORD_AUDIO_PERMISSION)
-    }
-
-    private fun setRecordingPath(context: Context) {
-        // Save to the app's cache directory
-        audioFilePath = "${context.externalCacheDir?.absolutePath}/myaudio.3gp"
-    }
-
-    private fun startRecording(context: Context) {
-        mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(context) // for modern APIs (31 or newer)
-        } else {
-            @Suppress("DEPRECATION")
-            MediaRecorder() // for older APIs
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-            setOutputFile(audioFilePath)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-
-            try {
-                prepare()
-            } catch (e: IOException) {
-                Log.e("AudioRecorder", "prepare() failed: ${e.message}")
-            }
-
-            start()
-        }
-
-        isRecording = true
-        Log.d("AudioRecorder", "Recording started at: $audioFilePath")
-    }
-
-    private fun stopRecording() {
-        mediaRecorder?.apply {
-            try {
-                stop()
-                release()
-            } catch (e: Exception) {
-                Log.e("AudioRecorder", "Stop/Release failed: ${e.message}")
-            }
-        }
-
-        mediaRecorder = null
-        isRecording = false
-        Log.d("AudioRecorder", "Recording stopped.")
+            REQUEST_RECORD_AUDIO_PERMISSION
+        )
     }
 
     private fun registerButtonEvents() {
-        val recordButton = findViewById<ImageButton>(R.id.record_button)
         recordButton.setOnClickListener {
-            if (isRecording) {
-                stopRecording()
-
-                val stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)
-                recordButton.backgroundTintList = stopColor
+            if (!audioRecorder.isRecording) {
+                startRecord()
             } else {
-                startRecording(this)
-
-                val recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)
-                recordButton.backgroundTintList = recordColor
+                stopRecordAndProcess()
             }
         }
-
     }
+
+    private fun startRecord() {
+        if (checkAudioPermission()) {
+            audioRecorder.start()
+            setRecordButtonTint(recordColor)
+        } else {
+            requestPermission()
+        }
+    }
+
+    private fun stopRecordAndProcess() {
+        // Stop Record
+        audioRecorder.stop()
+        setRecordButtonTint(stopColor)
+
+        // Process speech
+        lifecycleScope.launch {
+            try {
+                val response = EchoSpeechAnalyzer.analyzeSpeech(
+                    serverUrl = "http://localhost:8000/analyze",
+                    audioFile = File(audioRecorder.audioFilePath),
+                    intensity = true,
+                    speechrate = true,
+                    intonation = true,
+                    articulation = true,
+                    refText = "This is a reference text.",
+                    maxWorkers = 4
+                )
+
+                Log.d("EchoSpeech", "Server Result: ${response}")
+            } catch (e: UnknownServiceException) {
+                Toast.makeText(
+                    applicationContext,
+                    "Cannot connect to the service.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                Log.e("EchoSpeech", "${e.message}")
+            } catch (e: Exception) {
+                Toast.makeText(
+                    applicationContext,
+                    "Connection timeout.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                Log.e("EchoSpeech", "Error: ${e.message}")
+            }
+        }
+    }
+
+    private fun setRecordButtonTint(color: ColorStateList?) {
+        if (color == null) {
+            return
+        }
+
+        recordButton.backgroundTintList = color
+    }
+
 }
