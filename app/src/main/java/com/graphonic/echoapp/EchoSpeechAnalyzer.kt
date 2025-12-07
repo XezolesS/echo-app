@@ -8,7 +8,7 @@ import com.chaquo.python.android.AndroidPlatform
 
 class EchoSpeechModuleWrapper {
 
-    val MODULE_NAME = "test";
+    val MODULE_NAME = "echo-speech-module";
 
     private var py: Python
     private var module: PyObject
@@ -22,10 +22,8 @@ class EchoSpeechModuleWrapper {
         module = py.getModule(MODULE_NAME)
     }
 
-    fun HelloPython() {
-        val result = module.callAttr("hello_python")
-
-        Log.d("PYTHON", "$result")
+    fun help() {
+        val result = module.callAttr("main", "--help")
     }
 
 }
