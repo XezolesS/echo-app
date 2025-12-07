@@ -19,6 +19,7 @@ import com.graphonic.echoapp.response.ErrorResponse
 import com.graphonic.echoapp.response.IntensityResponse
 import com.graphonic.echoapp.response.IntonationResponse
 import com.graphonic.echoapp.response.SpeechRateResponse
+import com.graphonic.echoapp.ui.ArticulationFragment
 import com.graphonic.echoapp.ui.IntensityFragment
 import com.graphonic.echoapp.ui.IntonationFragment
 import com.graphonic.echoapp.ui.SpeechRateFragment
@@ -40,6 +41,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intensityFragment: IntensityFragment
     private lateinit var speechRateFragment: SpeechRateFragment
     private lateinit var intonationFragment: IntonationFragment
+    private lateinit var articulationFragment: ArticulationFragment
+
+    private var refText = "안녕하세요 반갑습니다"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,6 +97,15 @@ class MainActivity : AppCompatActivity() {
                 ?: IntonationFragment().also {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.intonation_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        articulationFragment =
+            supportFragmentManager.findFragmentById(R.id.articulation_fragment_container) as? ArticulationFragment
+                ?: ArticulationFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.articulation_fragment_container, it)
                         .hide(it)
                         .commit()
                 }
@@ -166,7 +179,7 @@ class MainActivity : AppCompatActivity() {
                     speechrate = true,
                     intonation = true,
                     articulation = true,
-                    refText = "This is a reference text.",
+                    refText = refText,
                     maxWorkers = 4
                 )
 
@@ -218,6 +231,23 @@ class MainActivity : AppCompatActivity() {
 
                     else -> {
                         hideFragment(intonationFragment)
+                    }
+                }
+
+                // Articulation
+                when (response.articulation) {
+                    is ArticulationResponse -> {
+                        articulationFragment.view?.post {
+                            articulationFragment.setReference(refText)
+                            articulationFragment.updateData(response.articulation)
+                            showFragment(articulationFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise articulation: ${response.articulation}")
+                    }
+
+                    else -> {
+                        hideFragment(articulationFragment)
                     }
                 }
 

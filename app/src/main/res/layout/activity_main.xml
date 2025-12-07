@@ -67,6 +67,11 @@
                 android:id="@+id/intonation_fragment_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/articulation_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
     </ScrollView>
