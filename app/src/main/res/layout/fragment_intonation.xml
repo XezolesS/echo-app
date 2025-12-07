@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".ui.IntonationFragment">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="음높이(Pitch) 분석"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:theme="@style/Theme.MaterialComponents.Light"
+        app:cardBackgroundColor="#F5F5F5"
+        app:cardCornerRadius="16dp">
+
+        <!-- Custom View for the Pitch Contour Chart -->
+        <com.graphonic.echoapp.ui.PitchContourView
+            android:id="@+id/pitch_contour_chart"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_margin="16dp" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/text_intonation_summary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        tools:text="전반적으로 안정적인 음높이를 유지하고 있습니다." />
+
+</LinearLayout>

@@ -12,9 +12,21 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.transition.Visibility
+import com.graphonic.echoapp.response.AnalysisResponse
+import com.graphonic.echoapp.response.ArticulationResponse
+import com.graphonic.echoapp.response.ErrorResponse
+import com.graphonic.echoapp.response.IntensityResponse
+import com.graphonic.echoapp.response.IntonationResponse
+import com.graphonic.echoapp.response.SpeechRateResponse
+import com.graphonic.echoapp.ui.ArticulationFragment
+import com.graphonic.echoapp.ui.IntensityFragment
+import com.graphonic.echoapp.ui.IntonationFragment
+import com.graphonic.echoapp.ui.SpeechRateFragment
 import kotlinx.coroutines.launch
 import java.io.File
 import java.net.UnknownServiceException
+import kotlin.math.PI
 
 class MainActivity : AppCompatActivity() {
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
@@ -25,6 +37,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recordButton: ImageButton;
 
     private lateinit var audioRecorder: AudioRecorder
+
+    private lateinit var intensityFragment: IntensityFragment
+    private lateinit var speechRateFragment: SpeechRateFragment
+    private lateinit var intonationFragment: IntonationFragment
+    private lateinit var articulationFragment: ArticulationFragment
+
+    private var refText = "안녕하세요 반갑습니다"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,8 +65,50 @@ class MainActivity : AppCompatActivity() {
         // Initialize the new AudioRecorder class
         audioRecorder = AudioRecorder(this)
 
+        // Initialize and add the Fragment
+        setupFragments()
+
         requestPermission()
         registerButtonEvents()
+    }
+
+    private fun setupFragments() {
+        // Find existing fragment or create a new one
+        intensityFragment =
+            supportFragmentManager.findFragmentById(R.id.intensity_fragment_container) as? IntensityFragment
+                ?: IntensityFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.intensity_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        speechRateFragment =
+            supportFragmentManager.findFragmentById(R.id.speech_rate_fragment_container) as? SpeechRateFragment
+                ?: SpeechRateFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.speech_rate_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        intonationFragment =
+            supportFragmentManager.findFragmentById(R.id.intonation_fragment_container) as? IntonationFragment
+                ?: IntonationFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.intonation_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
+
+        articulationFragment =
+            supportFragmentManager.findFragmentById(R.id.articulation_fragment_container) as? ArticulationFragment
+                ?: ArticulationFragment().also {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.articulation_fragment_container, it)
+                        .hide(it)
+                        .commit()
+                }
     }
 
     override fun onDestroy() {
@@ -83,6 +144,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setRecordButtonTint(color: ColorStateList?) {
+        if (color == null) {
+            return
+        }
+
+        recordButton.backgroundTintList = color
+    }
+
     private fun startRecord() {
         if (checkAudioPermission()) {
             audioRecorder.start()
@@ -97,9 +166,12 @@ class MainActivity : AppCompatActivity() {
         audioRecorder.stop()
         setRecordButtonTint(stopColor)
 
-        // Process speech
+        Toast.makeText(applicationContext, "Analyzing...", Toast.LENGTH_SHORT).show()
+        recordButton.isEnabled = false
+
         lifecycleScope.launch {
             try {
+                // Process speech
                 val response = EchoSpeechAnalyzer.analyzeSpeech(
                     serverUrl = "http://localhost:8000/analyze",
                     audioFile = File(audioRecorder.audioFilePath),
@@ -107,11 +179,78 @@ class MainActivity : AppCompatActivity() {
                     speechrate = true,
                     intonation = true,
                     articulation = true,
-                    refText = "This is a reference text.",
+                    refText = refText,
                     maxWorkers = 4
                 )
 
                 Log.d("EchoSpeech", "Server Result: ${response}")
+
+                // Visualize
+                // Intensity
+                when (response.intensity) {
+                    is IntensityResponse -> {
+                        intensityFragment.view?.post {
+                            intensityFragment.updateData(response.intensity)
+                            showFragment(intensityFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise intensity: ${response.intensity}")
+                    }
+
+                    else -> {
+                        hideFragment(intensityFragment)
+                    }
+                }
+
+                // Speech-rate
+                when (response.speechRate) {
+                    is SpeechRateResponse -> {
+                        speechRateFragment.view?.post {
+                            speechRateFragment.updateData(response.speechRate)
+                            showFragment(speechRateFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise speech rate: ${response.speechRate}")
+                    }
+
+                    else -> {
+                        hideFragment(speechRateFragment)
+                    }
+                }
+
+                // Intonation
+                when (response.intonation) {
+                    is IntonationResponse -> {
+                        intonationFragment.view?.post {
+                            intonationFragment.updateData(response.intonation)
+                            showFragment(intonationFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise intonation: ${response.intonation}")
+                    }
+
+                    else -> {
+                        hideFragment(intonationFragment)
+                    }
+                }
+
+                // Articulation
+                when (response.articulation) {
+                    is ArticulationResponse -> {
+                        articulationFragment.view?.post {
+                            articulationFragment.setReference(refText)
+                            articulationFragment.updateData(response.articulation)
+                            showFragment(articulationFragment)
+                        }
+
+                        Log.d("EchoSpeech", "Visualise articulation: ${response.articulation}")
+                    }
+
+                    else -> {
+                        hideFragment(articulationFragment)
+                    }
+                }
+
             } catch (e: UnknownServiceException) {
                 Toast.makeText(
                     applicationContext,
@@ -126,16 +265,18 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.e("EchoSpeech", "Error: ${e.message}")
+            } finally {
+                recordButton.isEnabled = true
             }
         }
     }
 
-    private fun setRecordButtonTint(color: ColorStateList?) {
-        if (color == null) {
-            return
-        }
+    private fun showFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction().show(fragment).commit()
+    }
 
-        recordButton.backgroundTintList = color
+    private fun hideFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction().hide(fragment).commit()
     }
 
 }
