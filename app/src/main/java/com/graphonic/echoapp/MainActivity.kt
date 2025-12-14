@@ -5,6 +5,7 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,10 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.transition.Visibility
-import com.graphonic.echoapp.response.AnalysisResponse
 import com.graphonic.echoapp.response.ArticulationResponse
-import com.graphonic.echoapp.response.ErrorResponse
 import com.graphonic.echoapp.response.IntensityResponse
 import com.graphonic.echoapp.response.IntonationResponse
 import com.graphonic.echoapp.response.SpeechRateResponse
@@ -26,7 +24,6 @@ import com.graphonic.echoapp.ui.SpeechRateFragment
 import kotlinx.coroutines.launch
 import java.io.File
 import java.net.UnknownServiceException
-import kotlin.math.PI
 
 class MainActivity : AppCompatActivity() {
     private val REQUEST_RECORD_AUDIO_PERMISSION = 200
@@ -34,16 +31,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recordColor: ColorStateList
     private lateinit var stopColor: ColorStateList
 
-    private lateinit var recordButton: ImageButton;
+    private lateinit var textRandomizerButton: ImageButton
+    private lateinit var recordButton: ImageButton
 
-    private lateinit var audioRecorder: AudioRecorder
+    private lateinit var speechText: TextView
 
     private lateinit var intensityFragment: IntensityFragment
     private lateinit var speechRateFragment: SpeechRateFragment
     private lateinit var intonationFragment: IntonationFragment
     private lateinit var articulationFragment: ArticulationFragment
 
-    private var refText = "안녕하세요 반갑습니다"
+    private lateinit var audioRecorder: AudioRecorder
+
+    private lateinit var randomGuideText: RandomGuideText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,21 +55,24 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Get Color
-        recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)
-        stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)
+        recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)!!
+        stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)!!
 
-        // Get button
-        recordButton = findViewById<ImageButton>(R.id.record_button)
+        textRandomizerButton = findViewById(R.id.text_randomizer_button)
+        recordButton = findViewById(R.id.record_button)
 
-        // Initialize the new AudioRecorder class
+        speechText = findViewById(R.id.speech_text)
+
         audioRecorder = AudioRecorder(this)
+        randomGuideText = GuideTextBuilder(this)
+            .addShortNormalSentences()
+            .addShortQuestionSentences()
+            .build()
 
-        // Initialize and add the Fragment
         setupFragments()
-
         requestPermission()
         registerButtonEvents()
+        randomizeSpeechText()
     }
 
     private fun setupFragments() {
@@ -135,6 +138,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun registerButtonEvents() {
+        // Text randomizer event
+        textRandomizerButton.setOnClickListener {
+            randomizeSpeechText()
+        }
+
+        // Record button event
         recordButton.setOnClickListener {
             if (!audioRecorder.isRecording) {
                 startRecord()
@@ -142,6 +151,10 @@ class MainActivity : AppCompatActivity() {
                 stopRecordAndProcess()
             }
         }
+    }
+
+    private fun randomizeSpeechText() {
+        speechText.text = randomGuideText.next()
     }
 
     private fun setRecordButtonTint(color: ColorStateList?) {
@@ -179,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                     speechrate = true,
                     intonation = true,
                     articulation = true,
-                    refText = refText,
+                    refText = speechText.text as String?,
                     maxWorkers = 4
                 )
 
@@ -238,7 +251,7 @@ class MainActivity : AppCompatActivity() {
                 when (response.articulation) {
                     is ArticulationResponse -> {
                         articulationFragment.view?.post {
-                            articulationFragment.setReference(refText)
+                            articulationFragment.setReference(speechText.text as String)
                             articulationFragment.updateData(response.articulation)
                             showFragment(articulationFragment)
                         }
