@@ -33,15 +33,9 @@ class ArticulationFragment : Fragment() {
         return view
     }
 
-    /**
-     * Sets the reference text that will be used for comparison.
-     * This should be called before `updateData`.
-     */
-    fun setReference(ref: String) {
-        this.referenceText = ref
-    }
-
     fun updateData(data: ArticulationResponse) {
+        referenceText = data.referenceText ?: ""
+
         // 1. Set the plain reference text
         textReference.text = referenceText
 
