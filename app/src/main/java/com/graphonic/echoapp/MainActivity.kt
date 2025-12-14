@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recordColor: ColorStateList
     private lateinit var stopColor: ColorStateList
 
-    private lateinit var recordButton: ImageButton;
+    private lateinit var recordButton: ImageButton
 
     private lateinit var audioRecorder: AudioRecorder
 
@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Get Color
-        recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)
-        stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)
+        recordColor = ContextCompat.getColorStateList(this, R.color.accent_processing)!!
+        stopColor = ContextCompat.getColorStateList(this, R.color.primary_2)!!
 
         // Get button
         recordButton = findViewById<ImageButton>(R.id.record_button)
