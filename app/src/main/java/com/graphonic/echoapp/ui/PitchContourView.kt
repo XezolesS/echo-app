@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import com.graphonic.echoapp.response.PitchContour
+import kotlin.math.roundToInt
 
 class PitchContourView @JvmOverloads constructor(
     context: Context,
@@ -32,14 +33,20 @@ class PitchContourView @JvmOverloads constructor(
         textSize = spToPx(12f)
     }
 
+    private val axisLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#FF888888") // Lighter Grey
+        textAlign = Paint.Align.LEFT
+        textSize = spToPx(10f)
+    }
+
     fun setData(data: PitchContour?) {
         this.pitchContour = data
         if (data != null) {
             val validF0s = data.f0Hz.filterNotNull()
             if (validF0s.isNotEmpty()) {
                 // Add a buffer for better visualization
-                minF0 = (validF0s.minOrNull() ?: 60.0) - 20.0
-                maxF0 = (validF0s.maxOrNull() ?: 200.0) + 20.0
+                minF0 = (validF0s.minOrNull() ?: 60.0) - 5.0
+                maxF0 = (validF0s.maxOrNull() ?: 200.0) + 5.0
             }
         }
         invalidate() // Redraw the view
@@ -51,7 +58,8 @@ class PitchContourView @JvmOverloads constructor(
 
         val labelHeight = spToPx(20f)
         val chartHeight = height - labelHeight
-        val chartWidth = width.toFloat()
+        val axisLabelWidth = dpToPx(30f)
+        val chartWidth = width - axisLabelWidth
 
         // --- Draw Pitch Contour Line ---
         var lastX = -1f
@@ -88,6 +96,15 @@ class PitchContourView @JvmOverloads constructor(
             val textY = chartHeight + labelHeight - dpToPx(4f)
             canvas.drawText(char, textX, textY, textPaint)
         }
+
+        // --- Draw Min/Max Hz Axis Labels ---
+        val labelX = chartWidth + dpToPx(6f)
+
+        // Max Hz Label (at the top)
+        canvas.drawText("${maxF0.roundToInt()}Hz", labelX, axisLabelPaint.textSize, axisLabelPaint)
+
+        // Min Hz Label (at the bottom)
+        canvas.drawText("${minF0.roundToInt()}Hz", labelX, chartHeight, axisLabelPaint)
     }
 
     private fun normalize(value: Double, min: Double, max: Double): Float {
