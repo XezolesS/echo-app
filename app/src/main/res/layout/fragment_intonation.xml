@@ -34,10 +34,18 @@
     </com.google.android.material.card.MaterialCardView>
 
     <TextView
-        android:id="@+id/text_intonation_summary"
+        android:id="@+id/text_intonation_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        android:text="@string/lable_intonation_info" />
+
+    <TextView
+        android:id="@+id/text_intonation_summary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:textColor="@android:color/darker_gray"
         android:textSize="14sp"
         tools:text="전반적으로 안정적인 음높이를 유지하고 있습니다." />

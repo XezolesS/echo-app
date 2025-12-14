@@ -3,6 +3,7 @@ package com.graphonic.echoapp.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
@@ -20,6 +21,9 @@ class IntensityBarChartView @JvmOverloads constructor(
     private var charVolumes: List<CharVolume> = emptyList()
     private var minDb: Double = -100.0
     private var maxDb: Double = 0.0
+
+    private val minThreshold = -35.0
+    private val maxThreshold = -12.0
 
     // Paint objects for drawing
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -55,14 +59,14 @@ class IntensityBarChartView @JvmOverloads constructor(
         if (charVolumes.isEmpty()) return
 
         // Calculate dimensions
-        val axisLabelWidth = dpToPx(40f)
+        val axisLabelWidth = dpToPx(30f)
         val chartAreaWidth = width - axisLabelWidth
         val labelHeight = spToPx(20f)
         val chartHeight = height - labelHeight
         val barCount = charVolumes.size
         val barSpacing = dpToPx(8f)
         val totalSpacing = (barCount - 1) * barSpacing
-        val barWidth = (width - totalSpacing) / barCount
+        val barWidth = (chartAreaWidth - totalSpacing) / barCount
 
         charVolumes.forEachIndexed { index, charVolume ->
             // --- Draw Bar ---
@@ -71,9 +75,9 @@ class IntensityBarChartView @JvmOverloads constructor(
                 val barHeight = normalizedHeight * chartHeight
                 val xOffset = index * (barWidth + barSpacing)
 
-                barPaint.color = when (charVolume.volume) {
-                    maxDb -> colorMax
-                    minDb -> colorMin
+                barPaint.color = when {
+                    charVolume.volume >= maxThreshold -> colorMax
+                    charVolume.volume <= minThreshold -> colorMin
                     else -> colorDefault
                 }
 
@@ -93,7 +97,7 @@ class IntensityBarChartView @JvmOverloads constructor(
         }
 
         // --- Draw Min/Max dB Axis Labels ---
-        val labelX = chartAreaWidth + dpToPx(4f)
+        val labelX = chartAreaWidth + dpToPx(6f)
 
         // Max dB Label (at the top)
         canvas.drawText("${maxDb.roundToInt()}dB", labelX, axisLabelPaint.textSize, axisLabelPaint)

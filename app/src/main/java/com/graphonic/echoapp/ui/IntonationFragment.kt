@@ -32,10 +32,11 @@ class IntonationFragment : Fragment() {
         if (validPitches.isNotEmpty()) {
             val mean = validPitches.average()
             val stdDev = kotlin.math.sqrt(validPitches.map { (it - mean) * (it - mean) }.average())
+            val normStd = stdDev / mean
 
             textSummary.text = when {
-                stdDev > 25 -> "음높이 변화가 다소 역동적입니다."
-                stdDev > 10 -> "자연스러운 억양으로 발성하고 있습니다."
+                normStd > 0.12 -> "음높이 변화가 다소 역동적입니다."
+                normStd > 0.05 -> "자연스러운 억양으로 발성하고 있습니다."
                 else -> "음높이가 단조로운 편입니다. 좀 더 생동감을 주는 것이 좋습니다."
             }
         } else {
