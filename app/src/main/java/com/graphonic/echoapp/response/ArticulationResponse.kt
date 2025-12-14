@@ -24,6 +24,9 @@ data class ArticulationResponse(
     @SerializedName("char_error_rate")
     val charErrorRate: Double,
 
+    @SerializedName("reference_text")
+    val referenceText: String?,
+
     @SerializedName("transcription")
     val transcription: String
 ) : AnalysisResult

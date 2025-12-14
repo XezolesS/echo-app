@@ -251,7 +251,6 @@ class MainActivity : AppCompatActivity() {
                 when (response.articulation) {
                     is ArticulationResponse -> {
                         articulationFragment.view?.post {
-                            articulationFragment.setReference(speechText.text as String)
                             articulationFragment.updateData(response.articulation)
                             showFragment(articulationFragment)
                         }
