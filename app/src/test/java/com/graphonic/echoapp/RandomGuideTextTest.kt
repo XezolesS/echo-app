@@ -8,6 +8,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 
@@ -24,15 +25,17 @@ class RandomGuideTextTest {
     fun setUp() {
         val fakeCsvData = """
             id,sentence
-            1,"첫 번째 문장입니다."
-            2,"두 번째 문장입니다."
-            3,"세 번째 문장입니다."
+            1,첫 번째 문장입니다.
+            2,두 번째 문장입니다.
+            3,세 번째 문장입니다.
         """.trimIndent()
 
         val fakeInputStream = fakeCsvData.byteInputStream(Charsets.UTF_8)
 
         mockResources = mock {
-            on { openRawResource(FAKE_RES_ID) } doReturn fakeInputStream
+            on { openRawResource(FAKE_RES_ID) } doAnswer {
+                fakeCsvData.byteInputStream(Charsets.UTF_8)
+            }
         }
 
         mockContext = mock {
@@ -50,12 +53,14 @@ class RandomGuideTextTest {
 
         val expectedSentences = listOf(
             "첫 번째 문장입니다.",
-            "이것은 두 번째 문장입니다.",
-            "세 번째 문장을 테스트합니다."
+            "두 번째 문장입니다.",
+            "세 번째 문장입니다."
         )
+
         assertTrue(
-            "Sentence should be one of the expected sentences",
-            expectedSentences.contains(sentence)
+            "Sentence should be one of the expected sentences:" +
+                    "\n$sentence is not in $expectedSentences",
+            sentence in expectedSentences
         )
         assertNotEquals("Sentence should not be empty", "", sentence)
     }
@@ -72,13 +77,11 @@ class RandomGuideTextTest {
             }
         }
 
-        // Assert that we have collected all 3 unique sentences
         assertEquals("Should have loaded all 3 unique sentences", 3, returnedSentences.size)
     }
 
     @Test
     fun `next() when queue is empty should trigger load and return a new sentence`() {
-        // First call loads the queue and returns one sentence
         val firstSentence = randomGuideText.next()
         assertNotNull(firstSentence)
         assertTrue(firstSentence.isNotEmpty())
@@ -98,13 +101,9 @@ class RandomGuideTextTest {
 
     @Test
     fun `constructor with empty file list should return empty string`() {
-        // Create an instance with no files
         val emptyGuideText = RandomGuideText(mockContext, emptyList())
-
-        // Call next()
         val sentence = emptyGuideText.next()
 
-        // Assert that the result is an empty string
         assertEquals("Should return an empty string if no files are provided", "", sentence)
     }
 

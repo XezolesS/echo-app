@@ -6,11 +6,11 @@ class GuideTextBuilder(private val context: Context) {
 
     private var referenceFiles: ArrayList<Int> = ArrayList()
 
-    fun add(resId: Int): GuideTextBuilder {
-        referenceFiles.add(resId)
+    fun add(resourceId: Int): GuideTextBuilder {
+        referenceFiles.add(resourceId)
         return this
     }
-    
+
     fun addShortNormalSentences(): GuideTextBuilder {
         add(R.raw.guidetext_short_normal)
         return this
