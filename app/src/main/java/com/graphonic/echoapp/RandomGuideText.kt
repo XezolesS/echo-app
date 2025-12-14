@@ -43,7 +43,6 @@ class RandomGuideText(
             try {
                 Log.d("RandomGuideText", "Loading sentences from file $fileId")
                 val linesFromFile = readLinesFromResource(context, fileId)
-                Log.d("RandomGuideText", "$linesFromFile")
 
                 linesFromFile
                     .drop(1) // Skip header
